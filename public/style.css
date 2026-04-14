@@ -346,3 +346,29 @@ input[type="number"]:focus, input[type="text"]:focus {
     .card { padding: 20px; }
     .header-content { flex-direction: column; gap: 10px; }
 }
+/* Estilos básicos para el contenedor (opcional) */
+.logo-container {
+  /* Por ejemplo, alinear a la izquierda en flexbox si el header usa flex */
+}
+
+/* Estilos para el enlace que envuelve la imagen */
+.sitio-logo-link {
+  display: inline-block; /* O block, dependiendo de tu diseño */
+  text-decoration: none; /* Quitar subrayado si lo hubiera */
+}
+
+/* Estilos para la imagen del logo */
+.sitio-logo {
+  max-width: 150px; /* Tamaño máximo deseado en pantallas grandes */
+  height: auto;     /* Mantener la proporción de la imagen */
+  display: block;   /* Evita espacios no deseados debajo de la imagen */
+  /* Puedes añadir márgenes para separarlo de otros elementos */
+  margin-right: 20px;
+}
+
+/* Ejemplo para asegurar responsividad básica */
+@media (max-width: 600px) {
+  .sitio-logo {
+    max-width: 100px; /* Reducir el tamaño en pantallas más pequeñas */
+  }
+}
