@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         for(let i = 0; i < n; i++) {
             let rowHtml = `<div class="matrix-row">`;
             for(let j = 0; j < n; j++) {
-                // Se agregó step="any" para permitir decimales fácilmente
                 rowHtml += `<input type="number" id="a_${i}_${j}" class="input-small" value="0" step="any"> <span>x${j+1}</span>`;
                 if(j < n - 1) rowHtml += ' <span>+</span> ';
             }
@@ -43,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
     });
 
-    // Función modificada para devolver 'true' si hizo intercambio (Paso 1 y 2 del pizarrón)
+    // Función para devolver 'true' si hizo intercambio (Paso 1 y 2)
     function pivotarMatriz(A, b) {
         let size = A.length;
         let huboIntercambio = false;
@@ -100,15 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pasos 1 y 2: Pivotar matriz
         let intercambio = pivotarMatriz(A, b);
 
-        // --- PASO 3: Generar HTML de Despejes ---
-        let despejesHtml = `<div class="result-box" style="margin-bottom: 20px;">
-            <h3 style="margin-bottom: 10px;">Paso 1, 2 y 3: Verificación y Despejes</h3>`;
+        // --- PASO 3: Generar HTML de Despejes (Caja Independiente) ---
+        let despejesHtml = `<div class="result-box" style="margin-bottom: 25px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 1, 2 y 3: Verificación y Despejes</h3>`;
             
         if (intercambio) {
-            despejesHtml += `<p style="color: var(--primary-hover); font-weight: 600; font-size: 0.9rem; margin-bottom: 10px;">
+            despejesHtml += `<p style="color: var(--primary); font-weight: 600; font-size: 0.95rem; margin-bottom: 15px;">
                 🔄 Se realizó un intercambio de filas para garantizar la dominancia diagonal.</p>`;
         } else {
-             despejesHtml += `<p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">
+             despejesHtml += `<p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px;">
                 ✅ La matriz se procesó en su orden original (diagonal verificada).</p>`;
         }
         
@@ -123,22 +122,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             eq += ` ) / ${A[i][i].toFixed(2)}`;
-            despejesHtml += `<li style="margin-bottom: 8px; background: #fff; padding: 5px; border-radius: 4px; border: 1px solid var(--border);">${eq}</li>`;
+            despejesHtml += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #333; color: #f0f0f0;">${eq}</li>`;
         }
         despejesHtml += `</ul></div>`;
 
         // --- PASO 4: Inicialización y Algoritmo ---
-        let x = new Array(n).fill(0); // x inicializadas en 0
+        let x = new Array(n).fill(0); 
         let maxIter = 100;
         let iter = 0;
         let error = Infinity;
         
-        let iterHtml = `<h3>Paso 4: Iteraciones (Inicializando en 0)</h3>`;
-        iterHtml += `<div class="iteration-card"><table class="simplex-table"><thead><tr><th>Iter</th>`;
+        let iterHtml = `<div class="iteration-card" style="margin-bottom: 25px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 4: Tabla de Iteraciones y Errores</h3>
+            <table class="simplex-table"><thead><tr><th>Iter</th>`;
         for(let i=0; i<n; i++) iterHtml += `<th>x${i+1}</th>`;
         iterHtml += `<th>Error</th></tr></thead><tbody>`;
 
-        // Imprimir iteración 0
         iterHtml += `<tr><td>0</td>`;
         for(let i=0; i<n; i++) iterHtml += `<td>0.0000</td>`;
         iterHtml += `<td>-</td></tr>`;
@@ -181,10 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         iterHtml += `</tbody></table></div>`;
         
         if (diverged || iter === maxIter) {
-            iterHtml += `<p style="color: red;"><strong>Advertencia:</strong> El sistema no convergió después de ${iter} iteraciones.</p>`;
+            iterHtml += `<p style="color: #ff4d4d; margin-top: 10px;"><strong>Advertencia:</strong> El sistema no convergió después de ${iter} iteraciones.</p>`;
         }
 
-        // Inyectamos los despejes antes de la tabla
+        // Inyectamos los despejes y la tabla
         document.getElementById('iterations-container').innerHTML = despejesHtml + iterHtml;
 
         let solutionHtml = `<div class="result-box"><p><strong>Solución Final Aproximada:</strong></p><ul>`;
@@ -196,9 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
         solutionHtml += `</ul></div>`;
 
         // --- PASO 5: Comprobación ---
-        let compHtml = `<div class="result-box" style="margin-top: 15px; background-color: #f1eadd; border-left: 4px solid var(--primary-hover);">
-            <h3 style="margin-bottom: 10px;">Paso 5: Comprobación</h3>
-            <p style="font-size: 0.9rem; margin-bottom: 10px;">Sustituyendo los resultados en el sistema original:</p>
+        let compHtml = `<div class="result-box" style="margin-top: 25px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 5: Comprobación</h3>
+            <p style="font-size: 0.95rem; margin-bottom: 15px; color: var(--text-muted);">Sustituyendo los resultados en el sistema original:</p>
             <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">`;
             
         for(let i = 0; i < n; i++) {
@@ -208,10 +207,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 sum += A_original[i][j] * x[j];
                 let term = A_original[i][j].toFixed(2);
                 let valX = x[j].toFixed(4);
-                eqStr += `(${term})(<strong>${valX}</strong>)`;
+                eqStr += `(${term})(<strong style="color: var(--primary);">${valX}</strong>)`;
                 if(j < n-1) eqStr += " + ";
             }
-            compHtml += `<li style="margin-bottom: 8px; background: #fff; padding: 6px; border-radius: 4px;">Ecuación ${i+1}: ${eqStr} = <strong>${sum.toFixed(4)}</strong> <br><em style="color: var(--text-muted); font-size: 0.85rem;">(Valor original de RHS esperado: ${b_original[i].toFixed(2)})</em></li>`;
+            compHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                <span style="color: var(--text-main);">Ecuación ${i+1}: ${eqStr} = </span><strong style="color: var(--primary); font-size: 1.1rem;">${sum.toFixed(4)}</strong> 
+                <br><em style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; display: block;">(Valor original de RHS esperado: ${b_original[i].toFixed(2)})</em>
+            </li>`;
         }
         compHtml += `</ul></div>`;
 
@@ -253,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             document.getElementById(loadingId).remove();
 
-            // Si data.reply existe, lo usa. Si no, imprime el error para que sepas qué falló en Vercel.
             const botReply = data.reply || `Error del servidor: ${data.error}`;
             chatHistory.innerHTML += `<div class="chat-msg msg-bot">${botReply}</div>`;
             chatHistory.scrollTop = chatHistory.scrollHeight;
