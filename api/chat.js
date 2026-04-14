@@ -13,6 +13,9 @@ module.exports = async function handler(req, res) {
 
     const { messages } = req.body;
 
+    // 👇 AQUÍ ESTÁ EL LOG PARA "ESPIAR" EL CHAT EN VERCEL 👇
+    console.log("Conversación actual:", JSON.stringify(messages, null, 2));
+
     try {
         const response = await openai.chat.completions.create({
             // 👇 ACTUALIZAMOS EL MODELO A LA VERSIÓN MÁS RECIENTE 👇
