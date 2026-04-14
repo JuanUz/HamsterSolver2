@@ -1,7 +1,9 @@
 const OpenAI = require('openai');
 
+// Inicializamos la librería de OpenAI, ¡pero la conectamos a los servidores de Google!
 const openai = new OpenAI({ 
-    apiKey: process.env.OPENAI_API_KEY 
+    apiKey: process.env.GEMINI_API_KEY, 
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" // <--- EL TRUCO ESTÁ AQUÍ
 });
 
 module.exports = async function handler(req, res) {
@@ -13,7 +15,7 @@ module.exports = async function handler(req, res) {
 
     try {
         const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gemini-1.5-flash", // Usamos el modelo gratuito y veloz de Gemini
             messages: messages,
             max_tokens: 600,
             temperature: 0.7
@@ -23,8 +25,7 @@ module.exports = async function handler(req, res) {
         res.status(200).json({ reply });
 
     } catch (error) {
-        console.error("❌ Error en OpenAI:", error.message);
-        // Regresamos el error exacto para saber qué falló
+        console.error("❌ Error en Gemini:", error.message);
         res.status(500).json({ error: error.message || 'Error interno del servidor' });
     }
 }
