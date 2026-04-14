@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HamsterSolver | Gauss-Seidel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <img src="logo.jpg" alt="HamsterSolver Logo" class="app-logo">
+                <h1>HamsterSolver</h1>
+            </div>
+            <p>Métodos Numéricos: Resolución de sistemas de ecuaciones por Gauss-Seidel.</p>
+        </header>
+
+        <main>
+            <section class="card setup-section">
+                <h2>Configuración del Sistema</h2>
+                <div class="input-group">
+                    <div>
+                        <label for="matrix-size">Tamaño de la matriz (n x n):</label>
+                        <input type="number" id="matrix-size" min="2" max="10" value="3">
+                    </div>
+                    <div>
+                        <label for="error-tol">Tolerancia de error:</label>
+                        <input type="number" id="error-tol" step="0.0001" value="0.001">
+                    </div>
+                </div>
+                <button id="btn-generate" class="btn-primary">Generar Matriz</button>
+            </section>
+
+            <section id="model-section" class="card hidden">
+                <h2>Sistema de Ecuaciones Lineales</h2>
+                <div id="matrix-container"></div>
+                <button id="btn-solve" class="btn-primary" style="margin-top: 20px;">Resolver por Gauss-Seidel</button>
+            </section>
+
+            <section id="results-section" class="card hidden">
+                <h2>Resultados y Procedimiento</h2>
+                
+                <div id="iterations-container"></div>
+                <div id="solution-output"></div>
+
+                <div id="chat-section" class="chat-container">
+                    <h3>¿Dudas con la convergencia o el resultado? Pregúntale a HamsterSolver 🐹</h3>
+                    <div id="chat-history" class="chat-history"></div>
+                    <div class="chat-input-group">
+                        <input type="text" id="chat-input" placeholder="Ej. ¿Qué es la matriz diagonalmente dominante?">
+                        <button id="btn-send-chat" class="btn-primary">Preguntar</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
