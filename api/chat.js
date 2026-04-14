@@ -1,9 +1,9 @@
 const OpenAI = require('openai');
 
-// Inicializamos la librería de OpenAI, ¡pero la conectamos a los servidores de Google!
 const openai = new OpenAI({ 
     apiKey: process.env.GEMINI_API_KEY, 
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" // <--- EL TRUCO ESTÁ AQUÍ
+    // 👇 ES VITAL QUE TERMINE EXACTAMENTE CON LA DIAGONAL (/) 👇
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" 
 });
 
 module.exports = async function handler(req, res) {
@@ -15,7 +15,8 @@ module.exports = async function handler(req, res) {
 
     try {
         const response = await openai.chat.completions.create({
-            model: "gemini-1.5-flash", // Usamos el modelo gratuito y veloz de Gemini
+            // 👇 ACTUALIZAMOS EL MODELO A LA VERSIÓN MÁS RECIENTE 👇
+            model: "gemini-2.5-flash", 
             messages: messages,
             max_tokens: 600,
             temperature: 0.7
