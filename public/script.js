@@ -253,7 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             document.getElementById(loadingId).remove();
 
-            const botReply = data.reply;
+            // Si data.reply existe, lo usa. Si no, imprime el error para que sepas qué falló en Vercel.
+            const botReply = data.reply || `Error del servidor: ${data.error}`;
             chatHistory.innerHTML += `<div class="chat-msg msg-bot">${botReply}</div>`;
             chatHistory.scrollTop = chatHistory.scrollHeight;
             chatMessages.push({ role: "assistant", content: botReply });

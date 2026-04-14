@@ -1,12 +1,10 @@
-import OpenAI from 'openai';
+const OpenAI = require('openai');
 
-// Vercel inyecta automáticamente las variables de entorno si las configuras en su panel
 const openai = new OpenAI({ 
     apiKey: process.env.OPENAI_API_KEY 
 });
 
-export default async function handler(req, res) {
-    // Solo permitimos peticiones POST
+module.exports = async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
@@ -26,6 +24,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error("❌ Error en OpenAI:", error.message);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        // Regresamos el error exacto para saber qué falló
+        res.status(500).json({ error: error.message || 'Error interno del servidor' });
     }
 }
