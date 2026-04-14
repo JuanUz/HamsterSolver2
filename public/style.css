@@ -359,7 +359,7 @@ input[type="number"]:focus, input[type="text"]:focus {
 
 /* Estilos para la imagen del logo */
 .sitio-logo {
-  max-width: 400px; /* Tamaño máximo deseado en pantallas grandes */
+  max-width: 300px; /* Tamaño máximo deseado en pantallas grandes */
   height: auto;     /* Mantener la proporción de la imagen */
   display: block;   /* Evita espacios no deseados debajo de la imagen */
   /* Puedes añadir márgenes para separarlo de otros elementos */
@@ -369,6 +369,6 @@ input[type="number"]:focus, input[type="text"]:focus {
 /* Ejemplo para asegurar responsividad básica */
 @media (max-width: 600px) {
   .sitio-logo {
-    max-width: 100px; /* Reducir el tamaño en pantallas más pequeñas */
+    max-width: 300px; /* Reducir el tamaño en pantallas más pequeñas */
   }
 }
