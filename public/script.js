@@ -10,6 +10,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelSection = document.getElementById('model-section');
     const resultsSection = document.getElementById('results-section');
     
+    // --- NUEVA LÓGICA DE INTERFAZ (Selector de Criterio) ---
+    const stopCriterionSelect = document.getElementById('stop-criterion');
+    const divErrorTol = document.getElementById('div-error-tol');
+    const divMaxIter = document.getElementById('div-max-iter');
+
+    stopCriterionSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'error') {
+            divErrorTol.style.display = 'block';
+            divMaxIter.style.display = 'none';
+        } else {
+            divErrorTol.style.display = 'none';
+            divMaxIter.style.display = 'block';
+        }
+    });
+
     const btnSendChat = document.getElementById('btn-send-chat');
     const chatInput = document.getElementById('chat-input');
     const chatHistory = document.getElementById('chat-history');
@@ -41,14 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
     });
 
-    // Función que evalúa la diagonal y registra los pasos explícitamente
     function pivotarYVerificar(A, b) {
         let size = A.length;
         let logHTML = `<ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 0.95rem;">`;
         let intercambios = 0;
 
         for (let i = 0; i < size; i++) {
-            // 1. Calcular suma de valores absolutos de la fila (excluyendo la diagonal)
             let sumaResto = 0;
             let equationStr = "";
             for (let j = 0; j < size; j++) {
@@ -57,8 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     equationStr += `|${A[i][j].toFixed(2)}|${j < size-1 && (size-1 !== i || j < size-2) ? ' + ' : ''}`;
                 }
             }
-            
-            // Limpiar el '+' colgante si la diagonal es el último elemento
             equationStr = equationStr.replace(/\s\+\s$/, ''); 
             
             let diagonalVal = Math.abs(A[i][i]);
@@ -69,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="color: var(--text-main);">Fila ${i+1}:</span> Verifica $|a_{${i+1},${i+1}}| \\ge \\sum |a_{${i+1},j}|$. <br>
                 <span style="color: #4ceabf;">${diagonalVal.toFixed(2)} $\\ge$ ${equationStr} (${sumaResto.toFixed(2)})</span> ✅ Dominante.</li>`;
             } else {
-                // No es dominante, buscar pivote
                 let maxRow = i;
                 let maxVal = diagonalVal;
                 for (let k = i + 1; k < size; k++) {
@@ -87,9 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a3820; border-left: 4px solid #ffa500;">
                     <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
                     <span style="color: #ffa500;">🔄 Se buscó el valor máximo en la columna ${i+1} y se intercambió la Fila ${i+1} con la Fila ${maxRow+1}.</span></li>`;
-                    
-                    // Re-evaluamos para el log para mostrar cómo quedó tras el cambio
-                    i--; // forzamos a reevaluar esta fila en la siguiente iteración del loop visual
+                    i--;
                 } else {
                      logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a2020; border-left: 4px solid #ff4d4d;">
                     <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
@@ -102,14 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnSolve.addEventListener('click', () => {
+        // Obtenemos qué criterio decidió el usuario
+        let criterion = document.getElementById('stop-criterion').value;
         let tol = parseFloat(document.getElementById('error-tol').value);
-        let maxIterInput = document.getElementById('max-iter');
-        let maxIter = maxIterInput ? parseInt(maxIterInput.value) : 100;
+        let maxIter = parseInt(document.getElementById('max-iter').value);
         
-        let A = [];
-        let b = [];
-        let A_original = [];
-        let b_original = [];
+        let A = []; let b = [];
+        let A_original = []; let b_original = [];
 
         for(let i = 0; i < n; i++) {
             let row = []; let row_orig = [];
@@ -122,13 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
             b.push(bVal); b_original.push(bVal);
         }
 
-        // --- PASOS 1 Y 2 EXPLICITOS ---
         let pivotResult = pivotarYVerificar(A, b);
         
         let despejesHtml = `<div class="result-box" style="margin-bottom: 25px;">
             <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 1 y 2: Verificación de Diagonal e Intercambios</h3>
             ${pivotResult.logHTML}
-            
             <h3 style="margin-top: 20px; margin-bottom: 15px; color: var(--primary);">Paso 3: Ecuaciones Despejadas</h3>
             <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1.1rem;">`;
             
@@ -146,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         despejesHtml += `</ul></div>`;
 
-        // --- PASO 4: Iteraciones ---
         let x = new Array(n).fill(0); 
         let iter = 0;
         let error = Infinity;
@@ -162,9 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
         iterHtml += `<td>-</td></tr>`;
 
         let diverged = false;
+        let limitReached = false; // Variable auxiliar de seguridad
 
-        // El Criterio de Parada en Acción
-        while(error > tol && iter < maxIter) {
+        // Bucle Principal Dinámico
+        while(true) {
             let x_old = [...x];
             error = 0;
 
@@ -185,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             iter++;
+
             if(error > 1e6 || isNaN(error)) {
                 diverged = true;
                 break;
@@ -193,36 +199,53 @@ document.addEventListener('DOMContentLoaded', () => {
             iterHtml += `<tr><td>${iter}</td>`;
             for(let i=0; i<n; i++) iterHtml += `<td>${x[i].toFixed(4)}</td>`;
             iterHtml += `<td>${error.toFixed(4)}</td></tr>`;
+
+            // Verificamos si se debe detener basándonos en la elección del usuario
+            if (criterion === 'error') {
+                if (error <= tol) break;
+                // Red de seguridad oculta para evitar que el navegador explote
+                if (iter >= 500) { 
+                    limitReached = true; 
+                    break; 
+                }
+            } else if (criterion === 'iterations') {
+                if (iter >= maxIter) break;
+            }
         }
         iterHtml += `</tbody></table></div>`;
         
-        // --- ANÁLISIS EXPLÍCITO DEL CRITERIO DE PARADA ---
+        // --- REPORTE EXPLÍCITO DEL CRITERIO DE PARADA ELEGIDO ---
         let stopCriterionHtml = `<div class="result-box" style="margin-bottom: 25px; border-left: 4px solid #ff007f;">
-            <h3 style="margin-bottom: 15px; color: #ff007f;">Evaluación de Criterios de Parada</h3>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">El algoritmo evalúa dos condiciones en cada iteración para decidir si debe detenerse:</p>
-            <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">
-                <li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <span style="color: var(--text-main);">Condición 1 (Error Sugerido):</span> ¿Error Actual (${error.toFixed(5)}) $\\le$ Tolerancia (${tol})?<br>
-                    <strong style="color: ${error <= tol ? '#4ceabf' : '#ff4d4d'};">-> ${error <= tol ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
-                </li>
-                <li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <span style="color: var(--text-main);">Condición 2 (Límite de Iteraciones):</span> ¿Iteración Actual (${iter}) $\\ge$ Máximo (${maxIter})?<br>
-                    <strong style="color: ${iter >= maxIter ? '#ffa500' : '#ff4d4d'};">-> ${iter >= maxIter ? 'SÍ, SE CUMPLE ⚠️' : 'NO ❌'}</strong>
-                </li>
-            </ul>`;
+            <h3 style="margin-bottom: 15px; color: #ff007f;">Evaluación de Criterio de Parada (${criterion === 'error' ? 'Por Tolerancia' : 'Por Iteraciones'})</h3>
+            <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">`;
 
-        if (diverged) {
-            stopCriterionHtml += `<p style="color: #ff4d4d; margin-top: 15px;"><strong>Conclusión:</strong> El sistema divirgió (el error creció infinitamente).</p>`;
-        } else if (error <= tol) {
-            stopCriterionHtml += `<p style="color: #4ceabf; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo exitosamente porque alcanzó el Error Sugerido en la iteración ${iter}.</p>`;
+        if (criterion === 'error') {
+            stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <span style="color: var(--text-main);">Condición:</span> ¿Error Actual (${error.toFixed(5)}) $\\le$ Tolerancia (${tol})?<br>
+                    <strong style="color: ${error <= tol ? '#4ceabf' : '#ff4d4d'};">-> ${error <= tol ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
+                </li>`;
+            if (diverged) {
+                stopCriterionHtml += `<p style="color: #ff4d4d; margin-top: 15px;"><strong>Conclusión:</strong> El sistema divirgió.</p>`;
+            } else if (error <= tol) {
+                stopCriterionHtml += `<p style="color: #4ceabf; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo exitosamente al alcanzar la tolerancia de error sugerida en la iteración ${iter}.</p>`;
+            } else if (limitReached) {
+                stopCriterionHtml += `<p style="color: #ffa500; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo automáticamente para evitar un ciclo infinito (límite de seguridad de 500 iteraciones) sin alcanzar la tolerancia requerida.</p>`;
+            }
         } else {
-            stopCriterionHtml += `<p style="color: #ffa500; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo para evitar un ciclo infinito porque alcanzó el límite de ${maxIter} iteraciones sugeridas, aunque no logró el error deseado.</p>`;
+            stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <span style="color: var(--text-main);">Condición:</span> ¿Iteración Actual (${iter}) $\\ge$ Límite (${maxIter})?<br>
+                    <strong style="color: ${iter >= maxIter ? '#4ceabf' : '#ff4d4d'};">-> ${iter >= maxIter ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
+                </li>`;
+            if (diverged) {
+                stopCriterionHtml += `<p style="color: #ff4d4d; margin-top: 15px;"><strong>Conclusión:</strong> El sistema divirgió antes de llegar a la iteración máxima.</p>`;
+            } else {
+                stopCriterionHtml += `<p style="color: #4ceabf; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo exitosamente al realizar estrictamente las ${maxIter} iteraciones solicitadas. El error final obtenido fue de ${error.toFixed(5)}.</p>`;
+            }
         }
-        stopCriterionHtml += `</div>`;
+        stopCriterionHtml += `</ul></div>`;
 
         document.getElementById('iterations-container').innerHTML = despejesHtml + iterHtml + stopCriterionHtml;
 
-        // --- SOLUCIÓN Y COMPROBACIÓN ---
         let solutionHtml = `<div class="result-box"><p><strong>Solución Final Aproximada:</strong></p><ul>`;
         let variableResults = "";
         for(let i = 0; i < n; i++) {
@@ -255,16 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('solution-output').innerHTML = solutionHtml + compHtml;
         resultsSection.classList.remove('hidden');
 
-        // Contexto para IA
         const systemPrompt = `Eres "HamsterSolver", un tutor experto en Métodos Numéricos. 
         El usuario acaba de intentar resolver un sistema de ecuaciones de ${n}x${n} por el método de Gauss-Seidel.
         Resultados obtenidos: ${variableResults} en ${iter} iteraciones, con un error final de ${error.toFixed(5)}.`;
 
         chatMessages = [{ role: "system", content: systemPrompt }];
-        chatHistory.innerHTML = '<div class="chat-msg msg-bot">¡Resultados generados con análisis explícito de diagonal y criterios de parada! ¿Tienes alguna duda? 🐹</div>';
+        chatHistory.innerHTML = '<div class="chat-msg msg-bot">¡Resultados listos y analizados bajo tu criterio de parada! ¿Tienes alguna duda? 🐹</div>';
     });
 
-    // Lógica del Chat (Serverless)
     async function sendMessage() {
         const text = chatInput.value.trim();
         if(!text) return;
