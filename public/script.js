@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelSection = document.getElementById('model-section');
     const resultsSection = document.getElementById('results-section');
     
-    // --- NUEVA LÓGICA DE INTERFAZ (Selector de Criterio) ---
+    // --- LÓGICA DE INTERFAZ (Selector de Criterio) ---
     const stopCriterionSelect = document.getElementById('stop-criterion');
     const divErrorTol = document.getElementById('div-error-tol');
     const divMaxIter = document.getElementById('div-max-iter');
@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
     });
 
+    // Función que evalúa la diagonal (SÍMBOLOS CORREGIDOS A HTML LIMPIO)
     function pivotarYVerificar(A, b) {
         let size = A.length;
         let logHTML = `<ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 0.95rem;">`;
@@ -76,9 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let esDominante = diagonalVal >= sumaResto;
 
             if (esDominante) {
+                // CORRECCIÓN: Se quitaron los $ y se usan <sub>, &ge; y &Sigma;
                 logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #2a432a; border-left: 4px solid #4ceabf;">
-                <span style="color: var(--text-main);">Fila ${i+1}:</span> Verifica $|a_{${i+1},${i+1}}| \\ge \\sum |a_{${i+1},j}|$. <br>
-                <span style="color: #4ceabf;">${diagonalVal.toFixed(2)} $\\ge$ ${equationStr} (${sumaResto.toFixed(2)})</span> ✅ Dominante.</li>`;
+                <span style="color: var(--text-main);">Fila ${i+1}:</span> Verifica |a<sub>${i+1},${i+1}</sub>| &ge; &Sigma; |a<sub>${i+1},j</sub>|. <br>
+                <span style="color: #4ceabf;">${diagonalVal.toFixed(2)} &ge; ${equationStr} (${sumaResto.toFixed(2)})</span> ✅ Dominante.</li>`;
             } else {
                 let maxRow = i;
                 let maxVal = diagonalVal;
@@ -94,13 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     let tempB = b[i]; b[i] = b[maxRow]; b[maxRow] = tempB;
                     intercambios++;
                     
+                    // CORRECCIÓN: Se usa &lt; en vez de $<$
                     logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a3820; border-left: 4px solid #ffa500;">
-                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
+                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} &lt; ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
                     <span style="color: #ffa500;">🔄 Se buscó el valor máximo en la columna ${i+1} y se intercambió la Fila ${i+1} con la Fila ${maxRow+1}.</span></li>`;
                     i--;
                 } else {
                      logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a2020; border-left: 4px solid #ff4d4d;">
-                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
+                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} &lt; ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
                     <span style="color: var(--text-muted);">⚠️ No se encontró un valor mayor en la columna para pivotar. El método podría no convergir.</span></li>`;
                 }
             }
@@ -110,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnSolve.addEventListener('click', () => {
-        // Obtenemos qué criterio decidió el usuario
         let criterion = document.getElementById('stop-criterion').value;
         let tol = parseFloat(document.getElementById('error-tol').value);
         let maxIter = parseInt(document.getElementById('max-iter').value);
@@ -166,9 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
         iterHtml += `<td>-</td></tr>`;
 
         let diverged = false;
-        let limitReached = false; // Variable auxiliar de seguridad
+        let limitReached = false; 
 
-        // Bucle Principal Dinámico
         while(true) {
             let x_old = [...x];
             error = 0;
@@ -200,10 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for(let i=0; i<n; i++) iterHtml += `<td>${x[i].toFixed(4)}</td>`;
             iterHtml += `<td>${error.toFixed(4)}</td></tr>`;
 
-            // Verificamos si se debe detener basándonos en la elección del usuario
             if (criterion === 'error') {
                 if (error <= tol) break;
-                // Red de seguridad oculta para evitar que el navegador explote
                 if (iter >= 500) { 
                     limitReached = true; 
                     break; 
@@ -214,14 +213,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         iterHtml += `</tbody></table></div>`;
         
-        // --- REPORTE EXPLÍCITO DEL CRITERIO DE PARADA ELEGIDO ---
+        // --- REPORTE EXPLÍCITO (SÍMBOLOS CORREGIDOS A HTML LIMPIO) ---
         let stopCriterionHtml = `<div class="result-box" style="margin-bottom: 25px; border-left: 4px solid #ff007f;">
             <h3 style="margin-bottom: 15px; color: #ff007f;">Evaluación de Criterio de Parada (${criterion === 'error' ? 'Por Tolerancia' : 'Por Iteraciones'})</h3>
             <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">`;
 
         if (criterion === 'error') {
+            // CORRECCIÓN: Se usa &le; en vez de $\le$
             stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <span style="color: var(--text-main);">Condición:</span> ¿Error Actual (${error.toFixed(5)}) $\\le$ Tolerancia (${tol})?<br>
+                    <span style="color: var(--text-main);">Condición:</span> ¿Error Actual (${error.toFixed(5)}) &le; Tolerancia (${tol})?<br>
                     <strong style="color: ${error <= tol ? '#4ceabf' : '#ff4d4d'};">-> ${error <= tol ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
                 </li>`;
             if (diverged) {
@@ -232,8 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 stopCriterionHtml += `<p style="color: #ffa500; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo automáticamente para evitar un ciclo infinito (límite de seguridad de 500 iteraciones) sin alcanzar la tolerancia requerida.</p>`;
             }
         } else {
+            // CORRECCIÓN: Se usa &ge; en vez de $\ge$
             stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <span style="color: var(--text-main);">Condición:</span> ¿Iteración Actual (${iter}) $\\ge$ Límite (${maxIter})?<br>
+                    <span style="color: var(--text-main);">Condición:</span> ¿Iteración Actual (${iter}) &ge; Límite (${maxIter})?<br>
                     <strong style="color: ${iter >= maxIter ? '#4ceabf' : '#ff4d4d'};">-> ${iter >= maxIter ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
                 </li>`;
             if (diverged) {
