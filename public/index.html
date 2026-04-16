@@ -12,13 +12,12 @@
         <header>
             <div class="header-content">
                 <img src="logo_animado.gif" alt="Animated hamster running on a blue wheel with radiating light effect on dark background, representing the HamsterSolver application logo" class="app-logo">
-                <header>
-  <div class="logo-container">
-    <a href="index.html">
-      <img src="logo2.png" alt="Logo de Gap - Página de Inicio" class="sitio-logo">
-    </a>
-  </div>
-  </header>
+                
+                <div class="logo-container">
+                    <a href="index.html">
+                        <img src="logo2.png" alt="Logo de HamsterSolver - Página de Inicio" class="sitio-logo">
+                    </a>
+                </div>
             </div>
             <p>Métodos Numéricos: Resolución de sistemas de ecuaciones por Gauss-Seidel.</p>
         </header>
@@ -34,6 +33,10 @@
                     <div>
                         <label for="error-tol">Tolerancia de error:</label>
                         <input type="number" id="error-tol" step="0.0001" value="0.001">
+                    </div>
+                    <div>
+                        <label for="max-iter">Máximas Iteraciones:</label>
+                        <input type="number" id="max-iter" value="100" min="1">
                     </div>
                 </div>
                 <button id="btn-generate" class="btn-primary">Generar Matriz</button>
@@ -61,6 +64,7 @@
                 </div>
             </section>
         </main>
+        
         <div class="tech-dock">
             <p>Made with <span class="heart-icon">💙</span> in <strong>TecNM</strong></p>
         </div>

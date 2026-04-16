@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Registrar el Service Worker para la PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error', err));
@@ -42,76 +41,97 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
     });
 
-    // Función para devolver 'true' si hizo intercambio (Paso 1 y 2)
-    function pivotarMatriz(A, b) {
+    // Función que evalúa la diagonal y registra los pasos explícitamente
+    function pivotarYVerificar(A, b) {
         let size = A.length;
-        let huboIntercambio = false;
-        
+        let logHTML = `<ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 0.95rem;">`;
+        let intercambios = 0;
+
         for (let i = 0; i < size; i++) {
-            let maxRow = i;
-            let maxVal = Math.abs(A[i][i]);
-            for (let k = i + 1; k < size; k++) {
-                if (Math.abs(A[k][i]) > maxVal) {
-                    maxVal = Math.abs(A[k][i]);
-                    maxRow = k;
+            // 1. Calcular suma de valores absolutos de la fila (excluyendo la diagonal)
+            let sumaResto = 0;
+            let equationStr = "";
+            for (let j = 0; j < size; j++) {
+                if (i !== j) {
+                    sumaResto += Math.abs(A[i][j]);
+                    equationStr += `|${A[i][j].toFixed(2)}|${j < size-1 && (size-1 !== i || j < size-2) ? ' + ' : ''}`;
                 }
             }
-            if (maxRow !== i) {
-                let tempA = A[i];
-                A[i] = A[maxRow];
-                A[maxRow] = tempA;
-                
-                let tempB = b[i];
-                b[i] = b[maxRow];
-                b[maxRow] = tempB;
-                huboIntercambio = true;
+            
+            // Limpiar el '+' colgante si la diagonal es el último elemento
+            equationStr = equationStr.replace(/\s\+\s$/, ''); 
+            
+            let diagonalVal = Math.abs(A[i][i]);
+            let esDominante = diagonalVal >= sumaResto;
+
+            if (esDominante) {
+                logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #2a432a; border-left: 4px solid #4ceabf;">
+                <span style="color: var(--text-main);">Fila ${i+1}:</span> Verifica $|a_{${i+1},${i+1}}| \\ge \\sum |a_{${i+1},j}|$. <br>
+                <span style="color: #4ceabf;">${diagonalVal.toFixed(2)} $\\ge$ ${equationStr} (${sumaResto.toFixed(2)})</span> ✅ Dominante.</li>`;
+            } else {
+                // No es dominante, buscar pivote
+                let maxRow = i;
+                let maxVal = diagonalVal;
+                for (let k = i + 1; k < size; k++) {
+                    if (Math.abs(A[k][i]) > maxVal) {
+                        maxVal = Math.abs(A[k][i]);
+                        maxRow = k;
+                    }
+                }
+
+                if (maxRow !== i) {
+                    let tempA = A[i]; A[i] = A[maxRow]; A[maxRow] = tempA;
+                    let tempB = b[i]; b[i] = b[maxRow]; b[maxRow] = tempB;
+                    intercambios++;
+                    
+                    logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a3820; border-left: 4px solid #ffa500;">
+                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
+                    <span style="color: #ffa500;">🔄 Se buscó el valor máximo en la columna ${i+1} y se intercambió la Fila ${i+1} con la Fila ${maxRow+1}.</span></li>`;
+                    
+                    // Re-evaluamos para el log para mostrar cómo quedó tras el cambio
+                    i--; // forzamos a reevaluar esta fila en la siguiente iteración del loop visual
+                } else {
+                     logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a2020; border-left: 4px solid #ff4d4d;">
+                    <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} $<$ ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
+                    <span style="color: var(--text-muted);">⚠️ No se encontró un valor mayor en la columna para pivotar. El método podría no convergir.</span></li>`;
+                }
             }
         }
-        return huboIntercambio;
+        logHTML += `</ul>`;
+        return { huboIntercambio: intercambios > 0, logHTML };
     }
 
     btnSolve.addEventListener('click', () => {
         let tol = parseFloat(document.getElementById('error-tol').value);
+        let maxIterInput = document.getElementById('max-iter');
+        let maxIter = maxIterInput ? parseInt(maxIterInput.value) : 100;
+        
         let A = [];
         let b = [];
-        
-        // Copias originales para el Paso 5 (Comprobación)
         let A_original = [];
         let b_original = [];
 
-        // Extraer valores
         for(let i = 0; i < n; i++) {
-            let row = [];
-            let row_orig = [];
+            let row = []; let row_orig = [];
             for(let j = 0; j < n; j++) {
                 let val = parseFloat(document.getElementById(`a_${i}_${j}`).value);
-                row.push(val);
-                row_orig.push(val);
+                row.push(val); row_orig.push(val);
             }
-            A.push(row);
-            A_original.push(row_orig);
-            
+            A.push(row); A_original.push(row_orig);
             let bVal = parseFloat(document.getElementById(`b_${i}`).value);
-            b.push(bVal);
-            b_original.push(bVal);
+            b.push(bVal); b_original.push(bVal);
         }
 
-        // Pasos 1 y 2: Pivotar matriz
-        let intercambio = pivotarMatriz(A, b);
-
-        // --- PASO 3: Generar HTML de Despejes (Caja Independiente) ---
-        let despejesHtml = `<div class="result-box" style="margin-bottom: 25px;">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 1, 2 y 3: Verificación y Despejes</h3>`;
-            
-        if (intercambio) {
-            despejesHtml += `<p style="color: var(--primary); font-weight: 600; font-size: 0.95rem; margin-bottom: 15px;">
-                🔄 Se realizó un intercambio de filas para garantizar la dominancia diagonal.</p>`;
-        } else {
-             despejesHtml += `<p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px;">
-                ✅ La matriz se procesó en su orden original (diagonal verificada).</p>`;
-        }
+        // --- PASOS 1 Y 2 EXPLICITOS ---
+        let pivotResult = pivotarYVerificar(A, b);
         
-        despejesHtml += `<ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1.1rem;">`;
+        let despejesHtml = `<div class="result-box" style="margin-bottom: 25px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 1 y 2: Verificación de Diagonal e Intercambios</h3>
+            ${pivotResult.logHTML}
+            
+            <h3 style="margin-top: 20px; margin-bottom: 15px; color: var(--primary);">Paso 3: Ecuaciones Despejadas</h3>
+            <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1.1rem;">`;
+            
         for(let i = 0; i < n; i++) {
             let eq = `x<sub>${i+1}</sub> = ( ${b[i].toFixed(2)}`;
             for(let j = 0; j < n; j++) {
@@ -126,14 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         despejesHtml += `</ul></div>`;
 
-        // --- PASO 4: Inicialización y Algoritmo ---
+        // --- PASO 4: Iteraciones ---
         let x = new Array(n).fill(0); 
-        let maxIter = 100;
         let iter = 0;
         let error = Infinity;
         
         let iterHtml = `<div class="iteration-card" style="margin-bottom: 25px;">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 4: Tabla de Iteraciones y Errores</h3>
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 4: Tabla de Iteraciones</h3>
             <table class="simplex-table"><thead><tr><th>Iter</th>`;
         for(let i=0; i<n; i++) iterHtml += `<th>x${i+1}</th>`;
         iterHtml += `<th>Error</th></tr></thead><tbody>`;
@@ -144,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let diverged = false;
 
+        // El Criterio de Parada en Acción
         while(error > tol && iter < maxIter) {
             let x_old = [...x];
             error = 0;
@@ -160,13 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 x[i] = (b[i] - sum) / A[i][i];
-                
                 let currentError = Math.abs(x[i] - x_old[i]);
                 if (currentError > error) error = currentError;
             }
 
             iter++;
-            
             if(error > 1e6 || isNaN(error)) {
                 diverged = true;
                 break;
@@ -176,16 +194,35 @@ document.addEventListener('DOMContentLoaded', () => {
             for(let i=0; i<n; i++) iterHtml += `<td>${x[i].toFixed(4)}</td>`;
             iterHtml += `<td>${error.toFixed(4)}</td></tr>`;
         }
-        
         iterHtml += `</tbody></table></div>`;
         
-        if (diverged || iter === maxIter) {
-            iterHtml += `<p style="color: #ff4d4d; margin-top: 10px;"><strong>Advertencia:</strong> El sistema no convergió después de ${iter} iteraciones.</p>`;
+        // --- ANÁLISIS EXPLÍCITO DEL CRITERIO DE PARADA ---
+        let stopCriterionHtml = `<div class="result-box" style="margin-bottom: 25px; border-left: 4px solid #ff007f;">
+            <h3 style="margin-bottom: 15px; color: #ff007f;">Evaluación de Criterios de Parada</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">El algoritmo evalúa dos condiciones en cada iteración para decidir si debe detenerse:</p>
+            <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">
+                <li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <span style="color: var(--text-main);">Condición 1 (Error Sugerido):</span> ¿Error Actual (${error.toFixed(5)}) $\\le$ Tolerancia (${tol})?<br>
+                    <strong style="color: ${error <= tol ? '#4ceabf' : '#ff4d4d'};">-> ${error <= tol ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
+                </li>
+                <li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <span style="color: var(--text-main);">Condición 2 (Límite de Iteraciones):</span> ¿Iteración Actual (${iter}) $\\ge$ Máximo (${maxIter})?<br>
+                    <strong style="color: ${iter >= maxIter ? '#ffa500' : '#ff4d4d'};">-> ${iter >= maxIter ? 'SÍ, SE CUMPLE ⚠️' : 'NO ❌'}</strong>
+                </li>
+            </ul>`;
+
+        if (diverged) {
+            stopCriterionHtml += `<p style="color: #ff4d4d; margin-top: 15px;"><strong>Conclusión:</strong> El sistema divirgió (el error creció infinitamente).</p>`;
+        } else if (error <= tol) {
+            stopCriterionHtml += `<p style="color: #4ceabf; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo exitosamente porque alcanzó el Error Sugerido en la iteración ${iter}.</p>`;
+        } else {
+            stopCriterionHtml += `<p style="color: #ffa500; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo para evitar un ciclo infinito porque alcanzó el límite de ${maxIter} iteraciones sugeridas, aunque no logró el error deseado.</p>`;
         }
+        stopCriterionHtml += `</div>`;
 
-        // Inyectamos los despejes y la tabla
-        document.getElementById('iterations-container').innerHTML = despejesHtml + iterHtml;
+        document.getElementById('iterations-container').innerHTML = despejesHtml + iterHtml + stopCriterionHtml;
 
+        // --- SOLUCIÓN Y COMPROBACIÓN ---
         let solutionHtml = `<div class="result-box"><p><strong>Solución Final Aproximada:</strong></p><ul>`;
         let variableResults = "";
         for(let i = 0; i < n; i++) {
@@ -194,15 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         solutionHtml += `</ul></div>`;
 
-        // --- PASO 5: Comprobación ---
         let compHtml = `<div class="result-box" style="margin-top: 25px;">
             <h3 style="margin-bottom: 15px; color: var(--primary);">Paso 5: Comprobación</h3>
             <p style="font-size: 0.95rem; margin-bottom: 15px; color: var(--text-muted);">Sustituyendo los resultados en el sistema original:</p>
             <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">`;
             
         for(let i = 0; i < n; i++) {
-            let sum = 0;
-            let eqStr = "";
+            let sum = 0; let eqStr = "";
             for(let j = 0; j < n; j++) {
                 sum += A_original[i][j] * x[j];
                 let term = A_original[i][j].toFixed(2);
@@ -217,19 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         compHtml += `</ul></div>`;
 
-        // Inyectamos el resultado final seguido de la comprobación
         document.getElementById('solution-output').innerHTML = solutionHtml + compHtml;
         resultsSection.classList.remove('hidden');
 
-        // Contexto para la IA
+        // Contexto para IA
         const systemPrompt = `Eres "HamsterSolver", un tutor experto en Métodos Numéricos. 
         El usuario acaba de intentar resolver un sistema de ecuaciones de ${n}x${n} por el método de Gauss-Seidel.
-        Resultados obtenidos: ${variableResults} en ${iter} iteraciones, con un error final de ${error.toFixed(5)}.
-        
-        REGLA DE ORO: Responde dudas sobre Gauss-Seidel, convergencia, dominancia diagonal o este sistema en particular de forma concisa.`;
+        Resultados obtenidos: ${variableResults} en ${iter} iteraciones, con un error final de ${error.toFixed(5)}.`;
 
         chatMessages = [{ role: "system", content: systemPrompt }];
-        chatHistory.innerHTML = '<div class="chat-msg msg-bot">¡Resultados de Gauss-Seidel listos, con despejes y comprobación! ¿Tienes dudas sobre el procedimiento? 🐹</div>';
+        chatHistory.innerHTML = '<div class="chat-msg msg-bot">¡Resultados generados con análisis explícito de diagonal y criterios de parada! ¿Tienes alguna duda? 🐹</div>';
     });
 
     // Lógica del Chat (Serverless)
@@ -243,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.push({ role: "user", content: text });
 
         const loadingId = "loading-" + Date.now();
-        chatHistory.innerHTML += `<div id="${loadingId}" class="chat-msg msg-bot">Analizando los despejes... 🐹💭</div>`;
+        chatHistory.innerHTML += `<div id="${loadingId}" class="chat-msg msg-bot">Analizando... 🐹💭</div>`;
         chatHistory.scrollTop = chatHistory.scrollHeight;
 
         try {
