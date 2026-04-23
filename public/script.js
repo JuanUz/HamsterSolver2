@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelSection = document.getElementById('model-section');
     const resultsSection = document.getElementById('results-section');
     
-    // --- LÓGICA DE INTERFAZ (Selector de Criterio) ---
     const stopCriterionSelect = document.getElementById('stop-criterion');
     const divErrorTol = document.getElementById('div-error-tol');
     const divMaxIter = document.getElementById('div-max-iter');
@@ -29,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const chatHistory = document.getElementById('chat-history');
     let chatMessages = [];
-    
     let n = 0;
 
     btnGenerate.addEventListener('click', () => {
@@ -56,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
     });
 
-    // Función que evalúa la diagonal (SÍMBOLOS CORREGIDOS A HTML LIMPIO)
     function pivotarYVerificar(A, b) {
         let size = A.length;
         let logHTML = `<ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 0.95rem;">`;
@@ -77,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let esDominante = diagonalVal >= sumaResto;
 
             if (esDominante) {
-                // CORRECCIÓN: Se quitaron los $ y se usan <sub>, &ge; y &Sigma;
                 logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #2a432a; border-left: 4px solid #4ceabf;">
                 <span style="color: var(--text-main);">Fila ${i+1}:</span> Verifica |a<sub>${i+1},${i+1}</sub>| &ge; &Sigma; |a<sub>${i+1},j</sub>|. <br>
                 <span style="color: #4ceabf;">${diagonalVal.toFixed(2)} &ge; ${equationStr} (${sumaResto.toFixed(2)})</span> ✅ Dominante.</li>`;
@@ -96,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     let tempB = b[i]; b[i] = b[maxRow]; b[maxRow] = tempB;
                     intercambios++;
                     
-                    // CORRECCIÓN: Se usa &lt; en vez de $<$
                     logHTML += `<li style="margin-bottom: 8px; background: #0a0b0d; padding: 10px; border-radius: 6px; border: 1px solid #4a3820; border-left: 4px solid #ffa500;">
                     <span style="color: var(--text-main);">Fila ${i+1}:</span> <span style="color: #ff4d4d;">${diagonalVal.toFixed(2)} &lt; ${sumaResto.toFixed(2)}</span> ❌ No dominante. <br>
                     <span style="color: #ffa500;">🔄 Se buscó el valor máximo en la columna ${i+1} y se intercambió la Fila ${i+1} con la Fila ${maxRow+1}.</span></li>`;
@@ -120,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let A = []; let b = [];
         let A_original = []; let b_original = [];
 
+        // Captura de datos
         for(let i = 0; i < n; i++) {
             let row = []; let row_orig = [];
             for(let j = 0; j < n; j++) {
@@ -130,6 +126,39 @@ document.addEventListener('DOMContentLoaded', () => {
             let bVal = parseFloat(document.getElementById(`b_${i}`).value);
             b.push(bVal); b_original.push(bVal);
         }
+
+        // --- BLOQUE DE SEGURIDAD: CÁLCULOS PROHIBIDOS ---
+        let firstVal = A[0][0];
+        let allIdentical = true;
+        let allZero = true;
+
+        for (let i = 0; i < n; i++) {
+            let rowSum = 0;
+            for (let j = 0; j < n; j++) {
+                if (A[i][j] !== firstVal) allIdentical = false;
+                if (A[i][j] !== 0) allZero = false;
+                rowSum += Math.abs(A[i][j]);
+            }
+            if (b[i] !== firstVal) allIdentical = false;
+            if (b[i] !== 0) allZero = false;
+
+            // Bloqueo de fila vacía (todos ceros en coeficientes)
+            if (rowSum === 0) {
+                alert("⛔ Error Crítico: Se detectó una fila llena de ceros. El sistema es singular y no puede resolverse.");
+                return;
+            }
+        }
+
+        if (allZero) {
+            alert("⛔ Error: No puedes dejar la matriz vacía. Por favor, ingresa los coeficientes.");
+            return;
+        }
+
+        if (allIdentical) {
+            alert(`⛔ Error: Sistema redundante detectado. No se pueden realizar cálculos si todos los valores son iguales (${firstVal}), ya que las ecuaciones serían linealmente dependientes.`);
+            return;
+        }
+        // --- FIN BLOQUE DE SEGURIDAD ---
 
         let pivotResult = pivotarYVerificar(A, b);
         
@@ -180,8 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (j !== i) sum += A[i][j] * x[j];
                 }
                 
+                // Seguridad adicional durante el cálculo
                 if (A[i][i] === 0) {
-                    alert("Cero en la diagonal principal detectado. El método no puede continuar.");
+                    alert("⛔ Error Matemático: Se encontró un cero en la diagonal principal que no se pudo pivotar. División imposible.");
                     return;
                 }
 
@@ -213,13 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         iterHtml += `</tbody></table></div>`;
         
-        // --- REPORTE EXPLÍCITO (SÍMBOLOS CORREGIDOS A HTML LIMPIO) ---
         let stopCriterionHtml = `<div class="result-box" style="margin-bottom: 25px; border-left: 4px solid #ff007f;">
             <h3 style="margin-bottom: 15px; color: #ff007f;">Evaluación de Criterio de Parada (${criterion === 'error' ? 'Por Tolerancia' : 'Por Iteraciones'})</h3>
             <ul style="list-style-type: none; padding-left: 0; font-family: monospace; font-size: 1rem;">`;
 
         if (criterion === 'error') {
-            // CORRECCIÓN: Se usa &le; en vez de $\le$
             stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
                     <span style="color: var(--text-main);">Condición:</span> ¿Error Actual (${error.toFixed(5)}) &le; Tolerancia (${tol})?<br>
                     <strong style="color: ${error <= tol ? '#4ceabf' : '#ff4d4d'};">-> ${error <= tol ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
@@ -232,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 stopCriterionHtml += `<p style="color: #ffa500; margin-top: 15px; font-weight: 600;">Conclusión: El programa se detuvo automáticamente para evitar un ciclo infinito (límite de seguridad de 500 iteraciones) sin alcanzar la tolerancia requerida.</p>`;
             }
         } else {
-            // CORRECCIÓN: Se usa &ge; en vez de $\ge$
             stopCriterionHtml += `<li style="margin-bottom: 10px; background: #0a0b0d; padding: 12px; border-radius: 8px; border: 1px solid #333;">
                     <span style="color: var(--text-main);">Condición:</span> ¿Iteración Actual (${iter}) &ge; Límite (${maxIter})?<br>
                     <strong style="color: ${iter >= maxIter ? '#4ceabf' : '#ff4d4d'};">-> ${iter >= maxIter ? 'SÍ, SE CUMPLE ✅' : 'NO ❌'}</strong>
